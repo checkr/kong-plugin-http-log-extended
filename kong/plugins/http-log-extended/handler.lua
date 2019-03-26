@@ -2,7 +2,6 @@ local basic_serializer = require "kong.plugins.http-log-extended.serializer"
 local BasePlugin = require "kong.plugins.base_plugin"
 local cjson = require "cjson"
 local url = require "socket.url"
-local inspect = require "inspect"
 
 local HttpLogExtendedHandler = BasePlugin:extend()
 
@@ -15,7 +14,7 @@ local HTTPS = "https"
 local function get_request_body()
   ngx.req.read_body()
   return ngx.req.get_body_data()
-end 
+end
 
 -- Generates the raw http message.
 -- @param `method` http method to be used to send data
@@ -113,25 +112,25 @@ function HttpLogExtendedHandler:new()
   HttpLogExtendedHandler.super.new(self, "http-log-extended")
 end
 
-function HttpLogExtendedHandler:access(conf) 
+function HttpLogExtendedHandler:access(conf)
   HttpLogExtendedHandler.super.access(self)
   ngx.ctx.http_log_extended = { req_body = "", res_body = "" }
-  
-  if (conf.log_request_body) then 
-    ngx.ctx.http_log_extended = { req_body = get_request_body() }
-  end 
-end 
 
-function HttpLogExtendedHandler:body_filter(conf) 
+  if (conf.log_request_body) then
+    ngx.ctx.http_log_extended = { req_body = get_request_body() }
+  end
+end
+
+function HttpLogExtendedHandler:body_filter(conf)
   HttpLogExtendedHandler.super.body_filter(self)
-  if (conf.log_response_body) then 
+  if (conf.log_response_body) then
     local chunk = ngx.arg[1]
     local ctx = ngx.ctx
     local res_body = ctx.http_log_extended and ctx.http_log_extended.res_body or ""
     res_body = res_body .. (chunk or "")
     ctx.http_log_extended.res_body = res_body
-  end 
-end 
+  end
+end
 
 -- serializes context data into an html message body.
 -- @param `ngx` The context table for the request being logged

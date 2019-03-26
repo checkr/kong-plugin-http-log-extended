@@ -27,7 +27,7 @@ function _M.serialize(ngx)
       headers = ngx.resp.get_headers(),
       size = ngx.var.bytes_sent,
       body = http_log_extended_ctx.res_body
-    }, 
+    },
     latencies = {
       kong = (ngx.ctx.KONG_ACCESS_TIME or 0) +
              (ngx.ctx.KONG_RECEIVE_TIME or 0),
@@ -39,6 +39,6 @@ function _M.serialize(ngx)
     client_ip = ngx.var.remote_addr,
     started_at = ngx.req.start_time() * 1000
   }
-end 
+end
 
-return _M 
+return _M
