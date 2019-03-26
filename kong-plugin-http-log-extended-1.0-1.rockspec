@@ -1,23 +1,27 @@
 package = "kong-plugin-http-log-extended"
 version = "1.0-1"
 supported_platforms = {"linux", "macosx"}
+
+local pluginName = package:match("^kong%-plugin%-(.+)$")
+
 source = {
-  url = "git://github.com/makcy/kong-http-log-extended",
-  tag = "v1.0"
+  url = "git://github.com/checkr/kong-http-log-extended",
+  tag = "0.1.1"
 }
+
 description = {
   summary = "Add Request & Response Body log options in http-log",
   license = "MIT",
-  homepage = "https://github.com/makcy/kong-plugin-http-log-extended",
 }
+
 dependencies = {
-  "lua ~> 5.1"
 }
+
 build = {
   type = "builtin",
   modules = {
-    ["kong.plugins.http-log-extended.handler"] = "handler.lua",
-    ["kong.plugins.http-log-extended.schema"] = "schema.lua",
-    ["kong.plugins.http-log-extended.serializer"] = "serializer.lua"
+    ["kong.plugins."..pluginName..".handler"] = "kong/plugins/"..pluginName.."/handler.lua",
+    ["kong.plugins."..pluginName..".schema"] = "kong/plugins/"..pluginName.."/schema.lua",
+    ["kong.plugins."..pluginName..".serializer"] = "kong/plugins/"..pluginName.."/serializer.lua",
   }
 }
