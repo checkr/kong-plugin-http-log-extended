@@ -13,7 +13,7 @@ local fmt = string.format
 local HttpLogExtendedHandler = BasePlugin:extend()
 
 HttpLogExtendedHandler.PRIORITY = 12
-HttpLogExtendedHandler.VERSION = "1.2"
+HttpLogExtendedHandler.VERSION = "1.3"
 
 local queues = {}
 local parsed_urls_cache = {}
@@ -109,7 +109,7 @@ local function send_payload(self, conf, payload)
   if not ok then
     -- the batch might already be processed at this point, so not being able to set the keepalive
     -- will not return false (the batch might not need to be reprocessed)
-    kong.log.err("failed keepalive for ", host, ":", tostring(port), ": ", err)
+    ngx.log(ngx.ERR, "failed keepalive for ", host, ":", tostring(port), ": ", err)
   end
 
   return success, err_msg
@@ -118,7 +118,6 @@ end
 local function json_array_concat(entries)
   return "[" .. table_concat(entries, ",") .. "]"
 end
-
 
 local function get_queue_id(conf)
   return fmt("%s:%s:%s:%s:%s:%s",
@@ -164,11 +163,7 @@ function HttpLogExtendedHandler:serialize(ngx)
   return cjson.encode(basic_serializer.serialize(ngx))
 end
 
-function HttpLogExtendedHandler:log(conf)
-  HttpLogExtendedHandler.super.log(self)
-
-  local entry = cjson_encode(basic_serializer.serialize(ngx))
-
+local function async_log(self, conf, entry)
   local queue_id = get_queue_id(conf)
   local q = queues[queue_id]
   if not q then
@@ -191,13 +186,39 @@ function HttpLogExtendedHandler:log(conf)
     local err
     q, err = BatchQueue.new(process, opts)
     if not q then
-      kong.log.err("could not create queue: ", err)
+      ngx.log(ngx.ERR, "could not create queue: ", err)
       return
     end
     queues[queue_id] = q
   end
 
   q:add(entry)
+end
+
+local function sync_log(premature, self, conf, entry)
+  if premature then
+    return
+  end
+
+  local i, ok, err
+  for i = conf.retry_count, 1, -1 do
+    ok, err = send_payload(self, conf, entry)
+    if ok then
+      return
+    end
+  end
+  ngx.log(ngx.ERR, "could not sync_log in http_log_extended: ", err)
+end
+
+function HttpLogExtendedHandler:log(conf)
+  HttpLogExtendedHandler.super.log(self)
+
+  local entry = cjson_encode(basic_serializer.serialize(ngx))
+  if (conf.sync_log) then
+    ngx.timer.at(0, sync_log, self, conf, entry)
+  else
+    async_log(self, conf, entry)
+  end
 end
 
 return HttpLogExtendedHandler
