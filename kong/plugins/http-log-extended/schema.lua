@@ -10,6 +10,6 @@ return {
     flush_timeout = { type = "number", default = 2 },
     log_request_body = { type = "boolean", default = true },
     log_response_body = { type = "boolean", default = true },
-    sync_log = { type = "boolean", default = false},
+    sync_log = { type = "boolean", default = true },
   }
 }
