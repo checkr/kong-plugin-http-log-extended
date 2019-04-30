@@ -1,12 +1,12 @@
 package = "kong-plugin-http-log-extended"
-version = "1.2-1"
+version = "1.3-1"
 supported_platforms = {"linux", "macosx"}
 
 local pluginName = package:match("^kong%-plugin%-(.+)$")
 
 source = {
   url = "git://github.com/checkr/kong-http-log-extended",
-  tag = "1.2"
+  tag = "1.3"
 }
 
 description = {
